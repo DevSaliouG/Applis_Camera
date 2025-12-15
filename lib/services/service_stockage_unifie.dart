@@ -7,6 +7,7 @@ import 'package:universal_html/html.dart' as html;
 import '../modeles/modele_media.dart';
 import 'service_images_web.dart';
 
+
 class ServiceStockageUnifie {
   static final ServiceStockageUnifie _instance = ServiceStockageUnifie._internal();
   factory ServiceStockageUnifie() => _instance;

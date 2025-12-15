@@ -6,7 +6,7 @@ class Etiquette {
   Etiquette({
     this.id,
     required this.nom,
-    this.couleur = '#2196F3',
+    this.couleur = '#A8C3A1', // Vert sauge par défaut
   });
 
   Map<String, dynamic> versMap() {
@@ -21,7 +21,7 @@ class Etiquette {
     return Etiquette(
       id: map['id'],
       nom: map['nom'],
-      couleur: map['couleur'] ?? '#2196F3',
+      couleur: map['couleur'] ?? '#A8C3A1',
     );
   }
 }

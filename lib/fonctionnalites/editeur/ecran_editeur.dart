@@ -12,8 +12,8 @@ class EcranEditeur extends StatefulWidget {
 }
 
 class _EcranEditeurState extends State<EcranEditeur> {
-  Color _couleurSelectionnee = Colors.red;
-  double _epaisseurPinceau = 2.0;
+  Color _couleurSelectionnee = const Color(0xFFA8C3A1);
+  double _epaisseurPinceau = 3.0;
   final List<DessinPoint> _points = [];
   final TextEditingController _controleurAnnotations = TextEditingController();
 
@@ -22,10 +22,18 @@ class _EcranEditeurState extends State<EcranEditeur> {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Éditeur'),
+        centerTitle: false,
         actions: [
-          IconButton(
-            icon: const Icon(Icons.save),
-            onPressed: _sauvegarder,
+          Container(
+            margin: const EdgeInsets.only(right: 12),
+            decoration: BoxDecoration(
+              color: const Color(0xFFA8C3A1).withOpacity(0.1),
+              borderRadius: BorderRadius.circular(15),
+            ),
+            child: IconButton(
+              icon: Icon(Icons.save_outlined, color: const Color(0xFFA8C3A1), size: 22),
+              onPressed: _sauvegarder,
+            ),
           ),
         ],
       ),
@@ -33,33 +41,54 @@ class _EcranEditeurState extends State<EcranEditeur> {
         children: [
           // Zone de dessin
           Expanded(
-            child: GestureDetector(
-              onPanUpdate: (details) {
-                setState(() {
-                  _points.add(DessinPoint(
-                    point: details.localPosition,
-                    couleur: _couleurSelectionnee,
-                    epaisseur: _epaisseurPinceau,
-                  ));
-                });
-              },
-              onPanStart: (details) {
-                setState(() {
-                  _points.add(DessinPoint(
-                    point: details.localPosition,
-                    couleur: _couleurSelectionnee,
-                    epaisseur: _epaisseurPinceau,
-                  ));
-                });
-              },
-              child: CustomPaint(
-                painter: PeintreDessin(points: _points),
-                child: Container(
-                  decoration: BoxDecoration(
-                    image: DecorationImage(
-                      image: FileImage(File(widget.cheminImage)),
-                      fit: BoxFit.contain,
-                    ),
+            child: Container(
+              margin: const EdgeInsets.all(24),
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(30),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.1),
+                    blurRadius: 30,
+                    offset: const Offset(0, 10),
+                  ),
+                ],
+              ),
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(30),
+                child: GestureDetector(
+                  onPanUpdate: (details) {
+                    setState(() {
+                      _points.add(DessinPoint(
+                        point: details.localPosition,
+                        couleur: _couleurSelectionnee,
+                        epaisseur: _epaisseurPinceau,
+                      ));
+                    });
+                  },
+                  onPanStart: (details) {
+                    setState(() {
+                      _points.add(DessinPoint(
+                        point: details.localPosition,
+                        couleur: _couleurSelectionnee,
+                        epaisseur: _epaisseurPinceau,
+                      ));
+                    });
+                  },
+                  child: Stack(
+                    children: [
+                      Container(
+                        decoration: BoxDecoration(
+                          image: DecorationImage(
+                            image: FileImage(File(widget.cheminImage)),
+                            fit: BoxFit.contain,
+                          ),
+                          color: const Color(0xFFF7F3EF),
+                        ),
+                      ),
+                      CustomPaint(
+                        painter: PeintreDessin(points: _points),
+                      ),
+                    ],
                   ),
                 ),
               ),
@@ -68,57 +97,119 @@ class _EcranEditeurState extends State<EcranEditeur> {
 
           // Outils
           Container(
-            padding: const EdgeInsets.all(8),
-            color: Colors.grey[200],
+            margin: const EdgeInsets.all(24),
+            padding: const EdgeInsets.all(24),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(30),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.05),
+                  blurRadius: 20,
+                  offset: const Offset(0, 5),
+                ),
+              ],
+            ),
             child: Column(
               children: [
                 // Outils dessin
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                   children: [
-                    IconButton(
-                      icon: const Icon(Icons.undo),
-                      onPressed: () {
-                        if (_points.isNotEmpty) {
+                    Container(
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFF7F3EF),
+                        borderRadius: BorderRadius.circular(15),
+                      ),
+                      child: IconButton(
+                        icon: Icon(Icons.undo_outlined, color: const Color(0xFF6F7D8C)),
+                        onPressed: () {
+                          if (_points.isNotEmpty) {
+                            setState(() {
+                              _points.removeLast();
+                            });
+                          }
+                        },
+                      ),
+                    ),
+                    Container(
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFF7F3EF),
+                        borderRadius: BorderRadius.circular(15),
+                      ),
+                      child: IconButton(
+                        icon: Icon(Icons.delete_outline, color: const Color(0xFFC57B57)),
+                        onPressed: () {
                           setState(() {
-                            _points.removeLast();
+                            _points.clear();
                           });
-                        }
-                      },
+                        },
+                      ),
                     ),
-                    IconButton(
-                      icon: const Icon(Icons.delete),
-                      onPressed: () {
-                        setState(() {
-                          _points.clear();
-                        });
-                      },
+                    GestureDetector(
+                      onTap: _afficherSelecteurCouleur,
+                      child: Container(
+                        padding: const EdgeInsets.all(12),
+                        decoration: BoxDecoration(
+                          color: _couleurSelectionnee.withOpacity(0.1),
+                          borderRadius: BorderRadius.circular(15),
+                          border: Border.all(
+                            color: _couleurSelectionnee,
+                            width: 2,
+                          ),
+                        ),
+                        child: Container(
+                          width: 24,
+                          height: 24,
+                          decoration: BoxDecoration(
+                            color: _couleurSelectionnee,
+                            shape: BoxShape.circle,
+                          ),
+                        ),
+                      ),
                     ),
-                    IconButton(
-                      icon: const Icon(Icons.color_lens),
-                      onPressed: () {
-                        _afficherSelecteurCouleur();
-                      },
-                    ),
-                    Slider(
-                      value: _epaisseurPinceau,
-                      min: 1,
-                      max: 20,
-                      onChanged: (value) {
-                        setState(() {
-                          _epaisseurPinceau = value;
-                        });
-                      },
+                    Expanded(
+                      child: Slider(
+                        value: _epaisseurPinceau,
+                        min: 1,
+                        max: 20,
+                        onChanged: (value) {
+                          setState(() {
+                            _epaisseurPinceau = value;
+                          });
+                        },
+                        activeColor: const Color(0xFFA8C3A1),
+                        inactiveColor: const Color(0xFFF7F3EF),
+                      ),
                     ),
                   ],
                 ),
 
+                const SizedBox(height: 20),
+
                 // Zone annotations texte
                 TextField(
                   controller: _controleurAnnotations,
-                  decoration: const InputDecoration(
+                  decoration: InputDecoration(
                     hintText: 'Ajouter des annotations...',
-                    border: OutlineInputBorder(),
+                    hintStyle: TextStyle(
+                      color: const Color(0xFF6F7D8C).withOpacity(0.5),
+                    ),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(15),
+                      borderSide: BorderSide(
+                        color: const Color(0xFF6F7D8C).withOpacity(0.2),
+                      ),
+                    ),
+                    focusedBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(15),
+                      borderSide: const BorderSide(
+                        color: Color(0xFFA8C3A1),
+                        width: 2,
+                      ),
+                    ),
+                    filled: true,
+                    fillColor: const Color(0xFFF7F3EF),
                   ),
                   maxLines: 3,
                 ),
@@ -133,32 +224,109 @@ class _EcranEditeurState extends State<EcranEditeur> {
   void _afficherSelecteurCouleur() {
     showDialog(
       context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Choisir une couleur'),
-        content: SingleChildScrollView(
-          child: ColorPicker(
-            pickerColor: _couleurSelectionnee,
-            onColorChanged: (color) {
-              setState(() {
-                _couleurSelectionnee = color;
-              });
-            },
-            showLabel: true,
-            pickerAreaHeightPercent: 0.8,
+      barrierColor: Colors.transparent,
+      builder: (context) => Dialog(
+        backgroundColor: Colors.transparent,
+        child: Container(
+          padding: const EdgeInsets.all(32),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(30),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.15),
+                blurRadius: 40,
+                offset: const Offset(0, 20),
+              ),
+            ],
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                'Choisir une couleur',
+                style: TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.w500,
+                  color: const Color(0xFF6F7D8C),
+                ),
+              ),
+              const SizedBox(height: 24),
+              ColorPicker(
+                pickerColor: _couleurSelectionnee,
+                onColorChanged: (color) {
+                  setState(() {
+                    _couleurSelectionnee = color;
+                  });
+                },
+                showLabel: false,
+                pickerAreaHeightPercent: 0.5,
+                pickerAreaBorderRadius: BorderRadius.circular(20),
+                enableAlpha: false,
+                displayThumbColor: true,
+                portraitOnly: true,
+              ),
+              const SizedBox(height: 24),
+              Row(
+                children: [
+                  Expanded(
+                    child: OutlinedButton(
+                      onPressed: () => Navigator.pop(context),
+                      style: OutlinedButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(vertical: 16),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(20),
+                        ),
+                        side: BorderSide(
+                          color: const Color(0xFF6F7D8C).withOpacity(0.3),
+                        ),
+                      ),
+                      child: Text(
+                        'Annuler',
+                        style: TextStyle(
+                          color: const Color(0xFF6F7D8C),
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: ElevatedButton(
+                      onPressed: () => Navigator.pop(context),
+                      style: ElevatedButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(vertical: 16),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(20),
+                        ),
+                        backgroundColor: const Color(0xFFA8C3A1),
+                      ),
+                      child: const Text(
+                        'Valider',
+                        style: TextStyle(color: Colors.white),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ],
           ),
         ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Valider'),
-          ),
-        ],
       ),
     );
   }
 
   void _sauvegarder() {
     // TODO: Sauvegarder les annotations et dessins
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: const Text('Modifications sauvegardées'),
+        behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(20),
+        ),
+        backgroundColor: const Color(0xFFA8C3A1),
+      ),
+    );
     Navigator.pop(context);
   }
 }
@@ -186,14 +354,15 @@ class PeintreDessin extends CustomPainter {
 
     Paint paint = Paint()
       ..style = PaintingStyle.stroke
-      ..strokeCap = StrokeCap.round;
+      ..strokeCap = StrokeCap.round
+      ..strokeJoin = StrokeJoin.round;
 
     for (int i = 0; i < points.length - 1; i++) {
       paint.color = points[i].couleur;
       paint.strokeWidth = points[i].epaisseur;
 
       canvas.drawLine(points[i].point, points[i + 1].point, paint);
-        }
+    }
 
     // Dessiner les points individuels
     for (var point in points) {

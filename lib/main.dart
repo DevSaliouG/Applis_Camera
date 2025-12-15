@@ -1,58 +1,35 @@
-import 'package:device_preview/device_preview.dart';
-import 'package:flutter/foundation.dart';
+// lib/main.dart
+import 'dart:ui';
+
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import 'package:si_capture_2/core/themes/theme_app.dart';
+import 'package:si_capture_2/core/themes/theme_manager.dart';
 import 'fonctionnalites/appareil_photo/ecran_appareil_photo.dart';
 import 'fonctionnalites/galerie/ecran_galerie.dart';
 import 'fonctionnalites/parametres/ecran_parametres.dart';
 
-void main() {
-  // Initialisation spécifique à la plateforme
-  if (kIsWeb) {
-    print('Application exécutée sur le web');
-    // Pour le web, certaines fonctionnalités seront limitées
-    _configurerPourWeb();
-  } else {
-    print('Application exécutée sur mobile');
-  }
-
-  runApp(const ApplicationSilicCapture());
-}
-
-/*void main() => runApp(
-  DevicePreview(
-    enabled: !kReleaseMode,
-    builder: (context) => const ApplicationSilicCapture(), // Wrap your app
-  ),
-);*/
-
-
-/// Configuration spécifique pour le web
-void _configurerPourWeb() {
-  // Désactiver certaines fonctionnalités non supportées sur le web
-  // ou configurer des alternatives
-}
+void main() => runApp(const ApplicationSilicCapture());
 
 class ApplicationSilicCapture extends StatelessWidget {
   const ApplicationSilicCapture({super.key});
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'SilicCapture',
-      theme: ThemeData(
-        primarySwatch: Colors.blue,
-        useMaterial3: true,
+    return ChangeNotifierProvider(
+      create: (context) => ThemeManager(),
+      child: Consumer<ThemeManager>(
+        builder: (context, themeManager, child) {
+          return MaterialApp(
+            title: 'SilicCapture',
+            theme: AppTheme.lightTheme,
+            darkTheme: AppTheme.darkTheme,
+            themeMode: themeManager.themeMode,
+            home: const EcranPrincipal(),
+            debugShowCheckedModeBanner: false,
+          );
+        },
       ),
-      home: const EcranPrincipal(),
-      debugShowCheckedModeBanner: false,
-      builder: (context, child) {
-        return MediaQuery(
-          data: MediaQuery.of(context).copyWith(
-            textScaler: TextScaler.linear(1.0), // Éviter le zoom automatique du texte
-          ),
-          child: child!,
-        );
-      },
     );
   }
 }
@@ -66,7 +43,6 @@ class EcranPrincipal extends StatefulWidget {
 
 class _EcranPrincipalState extends State<EcranPrincipal> {
   int _indexCourant = 0;
-  bool _afficherAvertissementWeb = kIsWeb;
 
   final List<Widget> _ecrans = [
     const EcranAppareilPhoto(),
@@ -76,66 +52,139 @@ class _EcranPrincipalState extends State<EcranPrincipal> {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final colorScheme = Theme.of(context).colorScheme;
+
     return Scaffold(
-      body: Column(
-        children: [
-          // Bandeau d'avertissement pour le web
-          if (_afficherAvertissementWeb)
-            Container(
-              padding: const EdgeInsets.all(8),
-              color: Colors.orange,
-              child: Row(
-                children: [
-                  const Icon(Icons.warning, color: Colors.white),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: Text(
-                      'Version web - certaines fonctionnalités sont limitées. Pour une expérience complète, utilisez l\'application mobile.',
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontSize: 12,
-                      ),
-                    ),
-                  ),
-                  IconButton(
-                    icon: const Icon(Icons.close, color: Colors.white, size: 16),
-                    onPressed: () {
-                      setState(() {
-                        _afficherAvertissementWeb = false;
-                      });
-                    },
-                  ),
-                ],
+      body: AnimatedSwitcher(
+        duration: const Duration(milliseconds: 300),
+        child: _ecrans[_indexCourant],
+      ),
+      // Cacher la BottomNavigationBar uniquement sur l'écran appareil photo (index 0)
+      bottomNavigationBar: _indexCourant == 0
+          ? null // Pas de BottomNavigationBar sur l'écran appareil photo
+          : ClipRRect(
+        child: BackdropFilter(
+          filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+          child: Container(
+            decoration: BoxDecoration(
+              color: colorScheme.surface.withOpacity(0.7),
+              border: Border(
+                top: BorderSide(
+                  color: colorScheme.outline.withOpacity(0.1),
+                  width: 1,
+                ),
               ),
             ),
-
-          // Contenu principal
-          Expanded(
-            child: _ecrans[_indexCourant],
+            child: BottomNavigationBar(
+              currentIndex: _indexCourant,
+              onTap: (index) {
+                setState(() {
+                  _indexCourant = index;
+                });
+              },
+              backgroundColor: Colors.transparent,
+              elevation: 0,
+              type: BottomNavigationBarType.fixed,
+              selectedItemColor: colorScheme.primary,
+              unselectedItemColor: colorScheme.onSurface.withOpacity(0.6),
+              selectedLabelStyle: const TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.w600,
+                letterSpacing: 0.5,
+              ),
+              unselectedLabelStyle: const TextStyle(
+                fontSize: 11,
+                fontWeight: FontWeight.w400,
+              ),
+              showSelectedLabels: true,
+              showUnselectedLabels: true,
+              items: [
+                BottomNavigationBarItem(
+                  icon: Container(
+                    padding: const EdgeInsets.symmetric(vertical: 4),
+                    child: Column(
+                      children: [
+                        AnimatedContainer(
+                          duration: const Duration(milliseconds: 200),
+                          width: _indexCourant == 0 ? 28 : 24,
+                          height: _indexCourant == 0 ? 28 : 24,
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            color: _indexCourant == 0
+                                ? colorScheme.primary.withOpacity(0.1)
+                                : Colors.transparent,
+                          ),
+                          child: Icon(
+                            _indexCourant == 0
+                                ? Icons.camera_alt_rounded
+                                : Icons.camera_alt_outlined,
+                            size: _indexCourant == 0 ? 20 : 18,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  label: 'CAPTURE',
+                ),
+                BottomNavigationBarItem(
+                  icon: Container(
+                    padding: const EdgeInsets.symmetric(vertical: 4),
+                    child: Column(
+                      children: [
+                        AnimatedContainer(
+                          duration: const Duration(milliseconds: 200),
+                          width: _indexCourant == 1 ? 28 : 24,
+                          height: _indexCourant == 1 ? 28 : 24,
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            color: _indexCourant == 1
+                                ? colorScheme.primary.withOpacity(0.1)
+                                : Colors.transparent,
+                          ),
+                          child: Icon(
+                            _indexCourant == 1
+                                ? Icons.photo_library_rounded
+                                : Icons.photo_library_outlined,
+                            size: _indexCourant == 1 ? 20 : 18,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  label: 'GALERIE',
+                ),
+                BottomNavigationBarItem(
+                  icon: Container(
+                    padding: const EdgeInsets.symmetric(vertical: 4),
+                    child: Column(
+                      children: [
+                        AnimatedContainer(
+                          duration: const Duration(milliseconds: 200),
+                          width: _indexCourant == 2 ? 28 : 24,
+                          height: _indexCourant == 2 ? 28 : 24,
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            color: _indexCourant == 2
+                                ? colorScheme.primary.withOpacity(0.1)
+                                : Colors.transparent,
+                          ),
+                          child: Icon(
+                            _indexCourant == 2
+                                ? Icons.settings_rounded
+                                : Icons.settings_outlined,
+                            size: _indexCourant == 2 ? 20 : 18,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  label: 'PARAMÈTRES',
+                ),
+              ],
+            ),
           ),
-        ],
-      ),
-      bottomNavigationBar: BottomNavigationBar(
-        currentIndex: _indexCourant,
-        onTap: (index) {
-          setState(() {
-            _indexCourant = index;
-          });
-        },
-        items: const [
-          BottomNavigationBarItem(
-            icon: Icon(Icons.camera),
-            label: 'Capture',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.photo_library),
-            label: 'Galerie',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.settings),
-            label: 'Paramètres',
-          ),
-        ],
+        ),
       ),
     );
   }

@@ -1,6 +1,6 @@
 class ParametresUtilisateur {
   bool themeSombre;
-  int qualiteImage; // 0: basse, 1: moyenne, 2: haute
+  int qualiteImage;
   bool sauvegardeAuto;
   bool notifications;
   String langue;
